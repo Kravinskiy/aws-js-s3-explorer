@@ -404,8 +404,8 @@ function ViewController($scope, SharedService) {
                 a.append(img);
             } else {
                 a.attr({ 'data-s3': 'folder' });
+                a.text(text);
             }
-            a.text(text);
             return a.prop('outerHTML');
         }
 
