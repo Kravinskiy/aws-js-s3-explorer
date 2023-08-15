@@ -286,7 +286,18 @@ const getSignedUrl = (bucket, s3Key) => {
         Bucket: bucket, Key: s3Key, Expires: 120,
     };
     DEBUG.log('params:', params);
-    return s3.getSignedUrl('getObject', params);
+    return new Promise((resolve, reject) => {
+        s3.getSignedUrl('getObject', params, (err, url) => {
+            if (url) {
+                resolve(url);
+                return;
+            }
+
+            DEBUG.log('err:', err);
+            SharedService.showError(params, err);
+            reject(err);
+        });
+    });
 };
 
 //
@@ -318,13 +329,7 @@ function ViewController($scope, SharedService) {
         } else if ($scope.view.settings.auth === 'anon') {
             // Unauthenticated user has clicked on an object so download it
             // in new window/tab
-            getSignedUrl($scope.view.settings.bucket, target.dataset.s3Key).then((err, url) => {
-                if (err) {
-                    DEBUG.log('err:', err);
-                    SharedService.showError(params, err);
-                    return;
-                }
-                
+            getSignedUrl($scope.view.settings.bucket, target.dataset.s3Key).then((url) => {
                 window.open(url);
             });
             
@@ -397,13 +402,7 @@ function ViewController($scope, SharedService) {
             a.attr({ href });
             
             if (download) {
-                getSignedUrl($scope.view.settings.bucket, s3key).then((err, url) => {
-                    if (err) {
-                        DEBUG.log('err:', err);
-                        SharedService.showError(params, err);
-                        return;
-                    }
-                    
+                getSignedUrl($scope.view.settings.bucket, s3key).then((url) => {                    
                     // A bit of timeout in case the below part didn't finish yet
                     setTimeout(function() { 
                         $('img_preload_' + s3key).attr('src', url);
