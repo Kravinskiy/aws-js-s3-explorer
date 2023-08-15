@@ -405,7 +405,7 @@ function ViewController($scope, SharedService) {
                 getSignedUrl($scope.view.settings.bucket, s3key).then((url) => {                    
                     // A bit of timeout in case the below part didn't finish yet
                     setTimeout(function() { 
-                        $('img_preload_' + s3key).attr('src', url);
+                        $('#img_preload_' + s3key).attr('src', url);
                     }, 1000);
                 });
 
