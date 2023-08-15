@@ -278,6 +278,25 @@ function SharedService($rootScope) {
     return shared;
 }
 
+const getSignedUrl = (s3Key) => {
+    // Authenticated user has clicked on an object so create pre-signed
+    // URL and download it in new window/tab
+    const s3 = new AWS.S3();
+    const params = {
+        Bucket: $scope.view.settings.bucket, Key: s3Key, Expires: 15,
+    };
+    DEBUG.log('params:', params);
+    s3.getSignedUrl('getObject', params, (err, url) => {
+        if (err) {
+            DEBUG.log('err:', err);
+            SharedService.showError(params, err);
+        } else {
+            DEBUG.log('url:', url);
+            return url;
+        }
+    });
+};
+
 //
 // ViewController: code associated with the main S3 Explorer table that shows
 // the contents of the current bucket/folder and allows the user to downloads
@@ -307,27 +326,13 @@ function ViewController($scope, SharedService) {
         } else if ($scope.view.settings.auth === 'anon') {
             // Unauthenticated user has clicked on an object so download it
             // in new window/tab
-            window.open(target.href, '_blank');
+            window.open(getSignedUrl(target.dataset.s3Key));
         } else {
-            // Authenticated user has clicked on an object so create pre-signed
-            // URL and download it in new window/tab
-            const s3 = new AWS.S3();
-            const params = {
-                Bucket: $scope.view.settings.bucket, Key: target.dataset.s3key, Expires: 15,
-            };
-            DEBUG.log('params:', params);
-            s3.getSignedUrl('getObject', params, (err, url) => {
-                if (err) {
-                    DEBUG.log('err:', err);
-                    SharedService.showError(params, err);
-                } else {
-                    DEBUG.log('url:', url);
-                    window.open(url, '_blank');
-                }
-            });
+            
         }
         return false;
     });
+
 
     // Delegated event handler for breadcrumb clicks.
     $bc.on('click', 'a', (e) => {
@@ -389,14 +394,19 @@ function ViewController($scope, SharedService) {
             const a = $('<a>');
             a.attr({ 'data-s3key': s3key });
             a.attr({ href });
+            
             if (download) {
                 a.attr({ 'data-s3': 'object' });
                 a.attr({ download });
+                const img = $('<img>');
+                img.attr({width: '60', height: '60'});
+                img.attr({href: getSignedUrl(s3Key)});
+                a.append(img);
             } else {
                 a.attr({ 'data-s3': 'folder' });
             }
             a.text(text);
-            return a.prop('outerHTML');
+            return a.html();
         }
 
         function render(d, href, text, download) {
