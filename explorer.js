@@ -400,7 +400,7 @@ function ViewController($scope, SharedService) {
                 a.attr({ download });
                 const img = $('<img>');
                 img.attr({width: '60', height: '60'});
-                img.attr({href: getSignedUrl(s3Key)});
+                img.attr({href: getSignedUrl(s3key)});
                 a.append(img);
             } else {
                 a.attr({ 'data-s3': 'folder' });
