@@ -283,18 +283,10 @@ const getSignedUrl = (bucket, s3Key) => {
     // URL and download it in new window/tab
     const s3 = new AWS.S3();
     const params = {
-        Bucket: bucket, Key: s3Key, Expires: 15,
+        Bucket: bucket, Key: s3Key, Expires: 120,
     };
     DEBUG.log('params:', params);
-    s3.getSignedUrl('getObject', params, (err, url) => {
-        if (err) {
-            DEBUG.log('err:', err);
-            SharedService.showError(params, err);
-        } else {
-            DEBUG.log('url:', url);
-            return url;
-        }
-    });
+    return s3.getSignedUrl('getObject', params);
 };
 
 //
@@ -326,7 +318,16 @@ function ViewController($scope, SharedService) {
         } else if ($scope.view.settings.auth === 'anon') {
             // Unauthenticated user has clicked on an object so download it
             // in new window/tab
-            window.open(getSignedUrl($scope.view.settings.bucket, target.dataset.s3Key));
+            getSignedUrl($scope.view.settings.bucket, target.dataset.s3Key).then((err, url) => {
+                if (err) {
+                    DEBUG.log('err:', err);
+                    SharedService.showError(params, err);
+                    return;
+                }
+                
+                window.open(url);
+            });
+            
         } else {
             
         }
@@ -396,11 +397,24 @@ function ViewController($scope, SharedService) {
             a.attr({ href });
             
             if (download) {
+                getSignedUrl($scope.view.settings.bucket, s3key).then((err, url) => {
+                    if (err) {
+                        DEBUG.log('err:', err);
+                        SharedService.showError(params, err);
+                        return;
+                    }
+                    
+                    // A bit of timeout in case the below part didn't finish yet
+                    setTimeout(function() { 
+                        $('img_preload_' + s3key).attr('src', url);
+                    }, 1000);
+                });
+
                 a.attr({ 'data-s3': 'object' });
                 a.attr({ download });
                 const img = $('<img>');
                 img.attr({width: '100', height: '100'});
-                img.attr({src: getSignedUrl($scope.view.settings.bucket, s3key)});
+                img.attr({id: 'img_preload_' + s3key});
                 a.append(img);
             } else {
                 a.attr({ 'data-s3': 'folder' });
