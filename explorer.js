@@ -396,6 +396,18 @@ function ViewController($scope, SharedService) {
         // DEBUG.log('renderObject:', JSON.stringify(full));
         const hrefv = object2hrefvirt($scope.view.settings.bucket, data);
 
+        const generateHashCode = (string) => {
+            let hash = 0,
+                i, chr;
+            if (string.length === 0) return hash;
+            for (i = 0; i < string.length; i++) {
+                chr = string.charCodeAt(i);
+                hash = ((hash << 5) - hash) + chr;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash;
+        };
+
         function buildAnchor(s3key, href, text, download) {
             const a = $('<a>');
             a.attr({ 'data-s3key': s3key });
@@ -405,7 +417,7 @@ function ViewController($scope, SharedService) {
                 getSignedUrl($scope.view.settings.bucket, s3key).then((url) => {                    
                     // A bit of timeout in case the below part didn't finish yet
                     setTimeout(function() { 
-                        $('#img_preload_' + s3key).attr('src', url);
+                        $('#img_preload_' + generateHashCode(s3key)).attr('src', url);
                     }, 1000);
                 });
 
@@ -413,7 +425,7 @@ function ViewController($scope, SharedService) {
                 a.attr({ download });
                 const img = $('<img>');
                 img.attr({width: '100', height: '100'});
-                img.attr({id: 'img_preload_' + s3key});
+                img.attr({id: 'img_preload_' + generateHashCode(s3key)});
                 a.append(img);
             } else {
                 a.attr({ 'data-s3': 'folder' });
