@@ -406,7 +406,7 @@ function ViewController($scope, SharedService) {
                 a.attr({ 'data-s3': 'folder' });
             }
             a.text(text);
-            return a.prop('outerHtml');
+            return a.prop('outerHTML');
         }
 
         function render(d, href, text, download) {
