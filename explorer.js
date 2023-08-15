@@ -278,12 +278,12 @@ function SharedService($rootScope) {
     return shared;
 }
 
-const getSignedUrl = (s3Key) => {
+const getSignedUrl = (bucket, s3Key) => {
     // Authenticated user has clicked on an object so create pre-signed
     // URL and download it in new window/tab
     const s3 = new AWS.S3();
     const params = {
-        Bucket: $scope.view.settings.bucket, Key: s3Key, Expires: 15,
+        Bucket: bucket, Key: s3Key, Expires: 15,
     };
     DEBUG.log('params:', params);
     s3.getSignedUrl('getObject', params, (err, url) => {
@@ -326,7 +326,7 @@ function ViewController($scope, SharedService) {
         } else if ($scope.view.settings.auth === 'anon') {
             // Unauthenticated user has clicked on an object so download it
             // in new window/tab
-            window.open(getSignedUrl(target.dataset.s3Key));
+            window.open(getSignedUrl($scope.view.settings.bucket, target.dataset.s3Key));
         } else {
             
         }
@@ -400,7 +400,7 @@ function ViewController($scope, SharedService) {
                 a.attr({ download });
                 const img = $('<img>');
                 img.attr({width: '60', height: '60'});
-                img.attr({href: getSignedUrl(s3key)});
+                img.attr({href: getSignedUrl($scope.view.settings.bucket, s3key)});
                 a.append(img);
             } else {
                 a.attr({ 'data-s3': 'folder' });
